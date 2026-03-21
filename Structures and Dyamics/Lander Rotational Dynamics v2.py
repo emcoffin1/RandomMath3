@@ -96,9 +96,9 @@ print(f"Edge: {worst[0]}")
 print(f"Minimum tipping velocity: {worst[1]:.3f} in/s")
 print(f"Minimum tipping velocity: {worst[1]*0.0254:.3f} m/s")
 
-ax.plot([cg[0], leg1[0]], [cg[1], leg1[1]], [cg[2], leg1[2]], label='rA')
-ax.plot([cg[0], leg2[0]], [cg[1], leg2[1]], [cg[2], leg2[2]], label='rB')
-plt.legend()
-plt.show()
+# ax.plot([cg[0], leg1[0]], [cg[1], leg1[1]], [cg[2], leg1[2]], label='rA')
+# ax.plot([cg[0], leg2[0]], [cg[1], leg2[1]], [cg[2], leg2[2]], label='rB')
+# plt.legend()
+# plt.show()
 
 
