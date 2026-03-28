@@ -5,9 +5,9 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-# file = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAiVvlK4HosRkGM0ZQuDVm-QdFwMwEuV1b277YvFMGsL7DvRBW9PdKyF-ZxUXCAtv_MPBNc37SHaCz/pub?output=xlsx"
-#
-file = "StructureData.xlsx"
+file = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAiVvlK4HosRkGM0ZQuDVm-QdFwMwEuV1b277YvFMGsL7DvRBW9PdKyF-ZxUXCAtv_MPBNc37SHaCz/pub?output=xlsx"
+
+# file = "StructureData.xlsx"
 sheet_name = "LanderStrut1"
 df = pd.read_excel(file, sheet_name=sheet_name)
 
