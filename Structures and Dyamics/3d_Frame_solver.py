@@ -331,12 +331,11 @@ def run(sheet_name="LanderStrut1", iterate=False):
     # print(element_results)
 
     sigma_abs_max_list = element_results['sigma_abs_max']
-    U_max = element_results['deform_max']
-    print(np.shape(sigma_abs_max_list), np.shape(U_nodes))
-    print(f"Maximum Stress: {np.max(sigma_abs_max_list)/1e6:.3f} MPa")
-    print(f"Maximum Deformation: {np.max(U_max)*1e3:3f} mm")
+    U_maxs = list(element_results['deform_max'])
 
-    # print(f"Max Stress: {np.max(element_results['sigma_abs_max'])}")
+
+    print(f"Maximum Stress: {np.max(sigma_abs_max_list)/1e6:.3f} MPa")
+    print(f"Maximum Deformation: {np.max(U_maxs)*1e3:3f} mm")
 
 
 def iterate():
