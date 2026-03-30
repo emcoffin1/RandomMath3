@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 file = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAiVvlK4HosRkGM0ZQuDVm-QdFwMwEuV1b277YvFMGsL7DvRBW9PdKyF-ZxUXCAtv_MPBNc37SHaCz/pub?output=xlsx"
 
-def run(sheet_name="LanderStrut1", iterate=False):
+def run(sheet_name="LanderStrut1", iterating=False, outer_d_input=None, inner_d_input=None):
 
     df = pd.read_excel(file, sheet_name=sheet_name)
 
@@ -26,11 +26,15 @@ def run(sheet_name="LanderStrut1", iterate=False):
 
     element_data["E"] = df['E'].dropna().to_numpy()
     element_data["G"] = df['G'].dropna().to_numpy()
+    if outer_d_input is not None:
+        outer_d = np.full((len(element_data["E"]),), outer_d_input)
+        inner_d = np.full((len(element_data["E"]),), inner_d_input)
 
-    outer_d = df["D_outer"].dropna().to_numpy()
-    outer_h = df["H_outer"].dropna().to_numpy()
-    inner_d = df["D_inner"].dropna().to_numpy()
-    inner_h = df["H_inner"].dropna().to_numpy()
+    else:
+        outer_d = df["D_outer"].dropna().to_numpy()
+        outer_h = df["H_outer"].dropna().to_numpy()
+        inner_d = df["D_inner"].dropna().to_numpy()
+        inner_h = df["H_inner"].dropna().to_numpy()
 
     struct = df["Shape"].dropna().to_numpy()
 
@@ -43,9 +47,12 @@ def run(sheet_name="LanderStrut1", iterate=False):
     for i in range(len(struct)):
         Iy = Iz = J = A = np.nan
         if struct[i].title() == "Circle":
-            Iy = Iz = np.pi/ 64 * (outer_d[i]**4 - inner_d[i]**4)
-            J = Iy + Iz
-            A = np.pi/4 * (outer_d[i]**2 - inner_d[i]**2)
+            try:
+                Iy = Iz = np.pi/ 64 * (outer_d[i]**4 - inner_d[i]**4)
+                J = Iy + Iz
+                A = np.pi/4 * (outer_d[i]**2 - inner_d[i]**2)
+            except Exception as e:
+                print(print(np.size(outer_d)))
 
         if struct[i].title() == "Rectangle":
             bo = outer_d[i]
@@ -120,7 +127,7 @@ def run(sheet_name="LanderStrut1", iterate=False):
 
     K = np.zeros((n_dof, n_dof))
 
-    if iterate:
+    if not iterating:
         fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))
         ax.set_title(f"Truss Structure Case {sheet_name[-1]}")
         ax.set_xlabel('x')
@@ -132,6 +139,7 @@ def run(sheet_name="LanderStrut1", iterate=False):
         plt_structure_3d(elements, nodes, ax, label="Original", color="-k")
         # plt_structure(elements, nodes+1, ax, label="Deformed", color='-r')
         # plt.show(block=True)
+
 
     element_results = []
 
@@ -208,7 +216,7 @@ def run(sheet_name="LanderStrut1", iterate=False):
 
     nodes_deformed = nodes + U_nodes[:, :3]
 
-    if iterate:
+    if not iterating:
         plt_structure_3d(elements, nodes_deformed, ax, label="Deformed", color="-r")
         plt.savefig(f"../images/3dDeformations.png",
                            dpi=300,
@@ -337,11 +345,60 @@ def run(sheet_name="LanderStrut1", iterate=False):
     print(f"Maximum Stress: {np.max(sigma_abs_max_list)/1e6:.3f} MPa")
     print(f"Maximum Deformation: {np.max(U_maxs)*1e3:3f} mm")
 
+    if iterating:
+        return [np.max(sigma_abs_max_list), np.max(U_maxs)]
+    else:
+        return None
+
 
 def iterate():
-    pass
+    thicknesses = [0.049, 0.065, 1/8]
+    outer_options = np.array([1/4, 3/8, 1/2, 3/4]) * 0.0254
+    inner_options1 = outer_options - 2*0.049*0.0254
+    inner_options2 = outer_options - 2*0.035*0.0254
+    inner_options = np.array([inner_options1, inner_options2])
+    # outer_options = np.array([1/4])*0.0254
+    # inner_options = np.array([0.152])*0.0254
+
+    fig, ax = plt.subplots(2, 1, sharex=True)
+    for j in range(len(inner_options)):
+        results = {"stress": [],
+                   "deformation": [], }
+
+        for i in range(len(outer_options)):
+            if i == 0:
+                # res = run(iterating=False, outer_d_input=outer_options[i], inner_d_input=inner_options[j, i])
+                res = run(iterating=True, outer_d_input=outer_options[i], inner_d_input=inner_options[j, i])
+            else:
+                res = run(iterating=True, outer_d_input=outer_options[i], inner_d_input=inner_options[j, i])
+            results['stress'].append(res[0])
+            results['deformation'].append(res[1])
+
+        stresses = np.array(results["stress"]) * 1e-6
+        deforms = np.array(results["deformation"]) * 1e3
+        ax[0].plot(outer_options, stresses, label=f"{(outer_options[0]-inner_options[j,0])*2*0.0254*1e3:.3f}")
+        ax[1].plot(outer_options, deforms, label=f"{(outer_options[0]-inner_options[j,0])*2*0.0254*1e3:.3f}")
+
+    ax[0].set_ylabel("Stress [MPa]")
+    ax[0].minorticks_on()
+    ax[0].grid(which='major', linestyle='-', linewidth='0.5', color='black')
+    ax[0].grid(which='minor', linestyle=':', linewidth='0.25', color='black', alpha=0.5)
+
+    ax[1].set_ylabel("Deformation [mm]")
+    ax[0].minorticks_on()
+    ax[1].grid(which='major', linestyle='-', linewidth='0.5', color='black')
+    ax[1].grid(which='minor', linestyle=':', linewidth='0.25', color='black', alpha=0.5)
+
+    fig.supxlabel("Outer Diameter [m]")
+    fig.suptitle(f"Study of Different Diameters of 6061 t6 Aluminum")
+    ax[0].legend(title='Thickness [m]')
+    ax[1].legend(title='Thickness [m]')
+    plt.show()
+
+
 
 
 if __name__ == "__main__":
-    run(iterate=False)
+    # run(iterating=False)
+    iterate()
 
