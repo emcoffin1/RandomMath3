@@ -4,10 +4,14 @@ from extra_functions import *
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+from pint import UnitRegistry
 
+unit = UnitRegistry()
+
+# add cost function and weight funciton
 file = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQAiVvlK4HosRkGM0ZQuDVm-QdFwMwEuV1b277YvFMGsL7DvRBW9PdKyF-ZxUXCAtv_MPBNc37SHaCz/pub?output=xlsx"
 
-def run(sheet_name="LanderStrut1", iterating=False, outer_d_input=None, inner_d_input=None):
+def run(sheet_name="LanderStrut1", iterating=False, density=0.0, outer_d_input=None, inner_d_input=None):
 
     df = pd.read_excel(file, sheet_name=sheet_name)
 
@@ -140,6 +144,24 @@ def run(sheet_name="LanderStrut1", iterating=False, outer_d_input=None, inner_d_
         # plt_structure(elements, nodes+1, ax, label="Deformed", color='-r')
         # plt.show(block=True)
 
+    mass = 0.0
+    if density != 0.0:
+        print("="*50)
+        print("COMPUTING VEHICLE WEIGHT")
+
+        for i, (n1, n2) in enumerate(elements):
+            n1 = int(n1)
+            n2 = int(n2)
+            x1, y1, z1 = nodes[n1]
+            x2, y2, z2 = nodes[n2]
+
+            area = element_data["A"][i]
+            L = np.sqrt((x1 - x2)**2 + (y1 - y2)**2 + (z1 - z2)**2)
+
+            mass += density * area * L
+    mass = mass * unit.kg
+
+
 
     element_results = []
 
@@ -219,8 +241,8 @@ def run(sheet_name="LanderStrut1", iterating=False, outer_d_input=None, inner_d_
     if not iterating:
         plt_structure_3d(elements, nodes_deformed, ax, label="Deformed", color="-r")
         plt.savefig(f"../images/3dDeformations.png",
-                           dpi=300,
-                           bbox_inches="tight")
+                    dpi=300,
+                    bbox_inches="tight")
         plt.show(block=True)
 
 
@@ -346,9 +368,9 @@ def run(sheet_name="LanderStrut1", iterating=False, outer_d_input=None, inner_d_
     print(f"Maximum Deformation: {np.max(U_maxs)*1e3:3f} mm")
 
     if iterating:
-        return [np.max(sigma_abs_max_list), np.max(U_maxs)]
+        return [np.max(sigma_abs_max_list), np.max(U_maxs), mass]
     else:
-        return None
+        return mass
 
 
 def iterate():
@@ -373,6 +395,7 @@ def iterate():
                 res = run(iterating=True, outer_d_input=outer_options[i], inner_d_input=inner_options[j, i])
             results['stress'].append(res[0])
             results['deformation'].append(res[1])
+            results['mass'].append(res[2])
 
         stresses = np.array(results["stress"]) * 1e-6
         deforms = np.array(results["deformation"]) * 1e3
@@ -385,7 +408,7 @@ def iterate():
     ax[0].grid(which='minor', linestyle=':', linewidth='0.25', color='black', alpha=0.5)
 
     ax[1].set_ylabel("Deformation [mm]")
-    ax[0].minorticks_on()
+    ax[1].minorticks_on()
     ax[1].grid(which='major', linestyle='-', linewidth='0.5', color='black')
     ax[1].grid(which='minor', linestyle=':', linewidth='0.25', color='black', alpha=0.5)
 
@@ -398,7 +421,13 @@ def iterate():
 
 
 
+    fig, ax = plt.subplots()
+
+
+
+
 if __name__ == "__main__":
-    # run(iterating=False)
-    iterate()
+    mass = run(iterating=False, density=2700)
+    print(f"{mass.to(unit.lb):.2f}")
+    # iterate()
 

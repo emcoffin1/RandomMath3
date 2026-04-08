@@ -91,9 +91,9 @@ if __name__ == "__main__":
         runner_mpg = np.random.normal(runner_mpg_nom, 1.0)
         new_mpg = np.random.normal(new_mpg_nom, 1.0)
 
-        run.append(analyze(runner_act, runner_mpg, runner_tank_sz, runner_ins, runner_m_bill, runner_cost, fuel_price))
+        run.append(analyze(runner_act, runner_mpg, runner_tank_sz, runner_ins, runner_m_bill, runner_cost, fuel_price, down=14000))
 
-        new.append(analyze(new_act, new_mpg, new_tank_sz, new_ins, new_m_bill, new_cost, fuel_price, down=5000, interest=0.07))
+        new.append(analyze(new_act, new_mpg, tank_size=12.4, insurance=200, bill=450, cost=28000, dol_per_gal=fuel_price, down=5000, interest=0.07))
 
     run = np.mean(run, axis=0)
     new = np.mean(new, axis=0)
