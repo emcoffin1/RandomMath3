@@ -11,6 +11,7 @@ fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))
 g = 386.4  # in/s^2
 
 # --- given ---
+# these come from the OnShape CAD
 W = 400  # lbf
 m = W / g  # slugs
 
@@ -29,17 +30,21 @@ leg3 = np.array([-9.843, -17.048, -8+8])
 legs = [leg1, leg2, leg3]
 
 # --- helper function ---
+# Built to be able to pass in different legs/orientations
+
 def tipping_velocity(legA, legB, cg, I_cg, m, ax):
-    # axis unit vector
+    # axis unit vector, which is from one foot to another
     e = (legB - legA) / np.linalg.norm(legB - legA)
 
     # vector from axis to CG
     r = cg - legA
 
     # parallel axis theorem
+    # I_o = I_cg + m * ||r||^2 * I_3 - rr^T)
     I_O = I_cg + m * ((np.dot(r, r) * np.eye(3)) - np.outer(r, r))
 
     # inertia about axis
+    # I_axis = e^T I_o e (matrix multiplication)
     I_axis = e.T @ I_O @ e
 
     # perpendicular distance from CG to axis
@@ -96,9 +101,9 @@ print(f"Edge: {worst[0]}")
 print(f"Minimum tipping velocity: {worst[1]:.3f} in/s")
 print(f"Minimum tipping velocity: {worst[1]*0.0254:.3f} m/s")
 
-# ax.plot([cg[0], leg1[0]], [cg[1], leg1[1]], [cg[2], leg1[2]], label='rA')
-# ax.plot([cg[0], leg2[0]], [cg[1], leg2[1]], [cg[2], leg2[2]], label='rB')
-# plt.legend()
-# plt.show()
+ax.plot([cg[0], leg1[0]], [cg[1], leg1[1]], [cg[2], leg1[2]], label='rA')
+ax.plot([cg[0], leg2[0]], [cg[1], leg2[1]], [cg[2], leg2[2]], label='rB')
+plt.legend()
+plt.show()
 
 
